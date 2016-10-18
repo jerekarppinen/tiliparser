@@ -9,12 +9,12 @@
     - Get your account transfer data from Nordea bank and save it on your drive
     - run 'node tiliparser.js <filename>' on the file
  */
-
+"use strict";
 var fs = require('fs');
 
 function parseDate(date) {
     var a = date.split('.');
-    return new Date(a[2], a[1], a[0]);
+    return new Date(a[2], a[1]-1, a[0]);
 }
 
 function parseValue(value) {
@@ -26,10 +26,10 @@ function parseValue(value) {
 
 class Item {
     constructor(row) {
-        var items = row.split('\t');
+        var items = row.split(';');
         this.date = parseDate(items[0]);
-        this.sum = parseValue(items[3]);
-        this.other = (items[4] || '').toLowerCase();
+        this.sum = parseValue(items[2]);
+        this.other = (items[5] || '').toLowerCase();
         this.month = this.date.getMonth() + 1;
         this.year = this.date.getFullYear();
         this.section = `${ this.year }-${ ('0'+this.month).slice(-2) }`;
@@ -59,6 +59,7 @@ class Section {
         this.sum += i.sum;
         if (i.sum > 0)
             this.positiveItems.push(i);
+        
         else
             this.negativeItems.push(i);
 
@@ -144,7 +145,7 @@ function generateSections(filename) {
     }
 
     var file = fs.readFileSync(filename).toString();
-    var rows = file.split('\n\r');
+    var rows = file.split('\n');
     var items = rows.map(r => new Item(r)).filter(i => i.isValid());
     items.forEach(addItemToItsSection);
 
@@ -186,5 +187,3 @@ sectionArray.forEach(s => {
     s.items.forEach(i => totalSection.addItem(i));
 });
 totalSection.print(true);
-
-console.log();
